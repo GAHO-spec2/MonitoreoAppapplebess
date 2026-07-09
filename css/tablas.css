@@ -1,0 +1,386 @@
+/* ==========================================================
+   TABLAS
+========================================================== */
+
+.table-wrapper{
+    width:100%;
+    overflow-x:auto;
+    border-radius:20px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:950px;
+}
+
+thead{
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+thead tr{
+    background:#101827;
+}
+
+th{
+    padding:18px 16px;
+    text-align:left;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#93a7bd;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+}
+
+td{
+    padding:16px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    vertical-align:middle;
+}
+
+tbody tr{
+    transition:.20s;
+}
+
+tbody tr:hover{
+    background:rgba(255,255,255,.045);
+}
+
+tbody tr:last-child td{
+    border-bottom:none;
+}
+
+/* ==========================================================
+   CABECERA DE TABLAS
+========================================================== */
+
+.table-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:18px;
+    margin-bottom:18px;
+}
+
+.table-header h2,
+.table-header h3{
+    margin:0;
+}
+
+.table-header p{
+    margin-top:6px;
+}
+
+/* ==========================================================
+   BUSCADOR
+========================================================== */
+
+.admin-search{
+    width:min(360px,100%);
+    padding:13px 15px;
+
+    border-radius:14px;
+
+    border:1px solid var(--line);
+
+    background:rgba(255,255,255,.08);
+
+    color:white;
+
+    outline:none;
+
+    transition:.20s;
+}
+
+.admin-search:focus{
+
+    border-color:rgba(227,24,55,.75);
+
+    box-shadow:0 0 0 4px rgba(227,24,55,.12);
+
+}
+
+/* ==========================================================
+   SELECT
+========================================================== */
+
+.admin-select{
+
+    width:min(260px,100%);
+
+    padding:13px 15px;
+
+    border-radius:14px;
+
+    border:1px solid var(--line);
+
+    background:rgba(255,255,255,.08);
+
+    color:white;
+
+    outline:none;
+
+}
+
+.admin-select option{
+
+    background:#0f172a;
+
+}
+
+/* ==========================================================
+   FILTROS
+========================================================== */
+
+.filters-row{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:18px;
+
+    flex-wrap:wrap;
+
+}
+
+/* ==========================================================
+   PAGINACIÓN
+========================================================== */
+
+.pagination{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-top:22px;
+
+    gap:14px;
+
+}
+
+.pagination-info{
+
+    color:var(--muted);
+
+    font-size:13px;
+
+}
+
+.pagination-buttons{
+
+    display:flex;
+
+    gap:8px;
+
+}
+
+.pagination button{
+
+    min-width:40px;
+
+    height:40px;
+
+    border:none;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    background:rgba(255,255,255,.08);
+
+    color:white;
+
+    transition:.2s;
+
+}
+
+.pagination button:hover{
+
+    background:rgba(227,24,55,.9);
+
+}
+
+/* ==========================================================
+   BADGES
+========================================================== */
+
+.badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:6px 10px;
+
+    border-radius:999px;
+
+    font-size:12px;
+
+    font-weight:800;
+
+}
+
+.badge-blue{
+
+    background:rgba(59,130,246,.14);
+
+    color:#93c5fd;
+
+}
+
+.badge-green{
+
+    background:rgba(34,197,94,.14);
+
+    color:#86efac;
+
+}
+
+.badge-yellow{
+
+    background:rgba(245,158,11,.14);
+
+    color:#fcd34d;
+
+}
+
+.badge-red{
+
+    background:rgba(239,68,68,.14);
+
+    color:#fca5a5;
+
+}
+
+.badge-gray{
+
+    background:rgba(148,163,184,.13);
+
+    color:#cbd5e1;
+
+}
+
+/* ==========================================================
+   BOTONES DE ACCIÓN
+========================================================== */
+
+.table-actions{
+
+    display:flex;
+
+    gap:8px;
+
+}
+
+.btn-icon{
+
+    width:36px;
+
+    height:36px;
+
+    display:grid;
+
+    place-items:center;
+
+    border:none;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    color:white;
+
+    background:rgba(255,255,255,.08);
+
+    transition:.2s;
+
+}
+
+.btn-icon:hover{
+
+    transform:translateY(-1px);
+
+}
+
+.btn-view{
+
+    background:#2563eb;
+
+}
+
+.btn-edit{
+
+    background:#ca8a04;
+
+}
+
+.btn-delete{
+
+    background:#dc2626;
+
+}
+
+/* ==========================================================
+   SIN RESULTADOS
+========================================================== */
+
+.empty-table{
+
+    padding:40px;
+
+    text-align:center;
+
+    color:var(--muted);
+
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media(max-width:900px){
+
+.table-header{
+
+flex-direction:column;
+
+align-items:stretch;
+
+}
+
+.filters-row{
+
+flex-direction:column;
+
+align-items:stretch;
+
+}
+
+.admin-search,
+
+.admin-select{
+
+width:100%;
+
+}
+
+.pagination{
+
+flex-direction:column;
+
+}
+
+}

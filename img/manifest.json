@@ -1,0 +1,22 @@
+{
+  "name": "Applebee's Loyalty Control Center",
+  "short_name": "Control Center",
+  "description": "Centro de monitoreo y administración del programa de lealtad Applebee's.",
+  "start_url": "login-admin.html",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#c8102e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "manzanas.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "manzanas.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

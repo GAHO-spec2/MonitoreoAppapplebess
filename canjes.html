@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Canjes | Applebee's Loyalty Control Center</title>
+
+  <link rel="icon" type="image/png" sizes="32x32" href="manzanas.png">
+    <link rel="stylesheet" href="css/admin.css" />
+ <link rel="stylesheet" href="css/cards.css" />
+<link rel="stylesheet" href="css/tablas.css" />
+<link rel="stylesheet" href="css/dashboard.css" />
+<link rel="stylesheet" href="css/modals.css" />
+<link rel="stylesheet" href="css/responsive.css" />
+</head>
+
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">A</div>
+        <div>
+          <h1>Applebee's Loyalty</h1>
+          <p>Control Center</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="clientes.html">Clientes</a>
+        <a href="tickets.html">Tickets</a>
+        <a href="canjes.html" class="active">Canjes</a>
+        <a href="gerentes.html">Gerentes</a>
+        <a href="auditoria.html">Auditoría</a>
+        <a href="alertas.html">Alertas</a>
+        <a href="estadisticas.html">Estadísticas</a>
+        <a href="configuracion.html">Configuración</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="page-title">
+          <h2>Canjes</h2>
+          <p>Monitoreo de cortesías generadas, pendientes, canjeadas y canceladas.</p>
+        </div>
+
+        <div class="user-box">
+          <div>
+            <strong id="nombreUsuario">---</strong>
+            <small id="rolUsuario">---</small>
+          </div>
+          <button class="btn btn-secondary" onclick="cerrarSesion()">Salir</button>
+        </div>
+      </header>
+
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <p>Total canjes</p>
+          <h3 id="kpiCanjesTotal">0</h3>
+        </div>
+
+        <div class="kpi-card">
+          <p>Pendientes</p>
+          <h3 id="kpiCanjesPendientes">0</h3>
+        </div>
+
+        <div class="kpi-card">
+          <p>Canjeados</p>
+          <h3 id="kpiCanjesCanjeados">0</h3>
+        </div>
+
+        <div class="kpi-card">
+          <p>Monto usado</p>
+          <h3 id="kpiMontoCanjeado">$0.00</h3>
+        </div>
+      </section>
+
+      <section class="panel-card">
+        <div class="table-header">
+          <div>
+            <h3>Registro de canjes</h3>
+            <p class="muted">Busca por cliente, beneficio, gerente, sucursal o estado.</p>
+          </div>
+
+          <div class="filters-row">
+            <input
+              type="search"
+              id="buscarCanje"
+              class="admin-search"
+              placeholder="Buscar canje..."
+              oninput="filtrarCanjes()"
+            />
+
+            <select id="filtroEstadoCanje" class="admin-select" onchange="filtrarCanjes()">
+              <option value="">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="canjeado">Canjeado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Creado</th>
+                <th>Cliente</th>
+                <th>Beneficio</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th>Sucursal</th>
+                <th>Gerente</th>
+                <th>Validado</th>
+              </tr>
+            </thead>
+            <tbody id="tablaCanjesAdmin">
+              <tr>
+                <td colspan="8">Cargando canjes...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+  <script src="/img/firebase.js"></script>
+  <script src="js/common.js?v=admin_1"></script>
+  <script src="js/auth.js?v=admin_1"></script>
+  <script src="js/canjes.js?v=admin_1"></script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+/* ==========================================================
+   RESPONSIVE GENERAL
+========================================================== */
+
+@media (max-width: 1180px) {
+  .admin-layout {
+    grid-template-columns: 230px 1fr;
+  }
+
+  .sidebar {
+    padding: 18px;
+  }
+
+  .nav a {
+    padding: 11px 12px;
+    font-size: 14px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+
+  .soc-grid,
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .soc-status-bar,
+  .metric-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: relative;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand {
+    margin-bottom: 18px;
+  }
+
+  .nav {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .main {
+    padding: 22px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .user-box {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filters-row,
+  .table-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-search,
+  .admin-select,
+  .admin-input {
+    width: 100%;
+  }
+
+  .cliente-profile-card,
+  .ticket-summary-card,
+  .alert-main {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .config-grid,
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .system-status div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .main {
+    padding: 16px;
+  }
+
+  .sidebar {
+    padding: 16px;
+  }
+
+  .nav {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title h2 {
+    font-size: 28px;
+  }
+
+  .kpi-grid,
+  .soc-status-bar,
+  .metric-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-card h3 {
+    font-size: 30px;
+  }
+
+  .panel-card,
+  .kpi-card,
+  .soc-panel {
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .brand-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .brand h1 {
+    font-size: 15px;
+  }
+
+  .login-card {
+    padding: 22px;
+    border-radius: 22px;
+  }
+
+  .login-heading h2 {
+    font-size: 28px;
+  }
+
+  .login-footer {
+    flex-direction: column;
+  }
+
+  table {
+    min-width: 840px;
+  }
+
+  th,
+  td {
+    padding: 12px 10px;
+  }
+
+  .global-toast {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+  }
+}
+
+@media (max-width: 390px) {
+  .btn {
+    width: 100%;
+  }
+
+  .user-box {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .table-actions {
+    flex-direction: column;
+  }
+}
