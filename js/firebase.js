@@ -18,14 +18,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const rtdb = firebase.database();
 
-try {
-  db.settings({
-    experimentalForceLongPolling: true,
-    merge: true
-  });
-} catch (e) {
-  console.warn("Firestore settings ya estaban aplicadas:", e);
-}
+
 
 let storage = null;
 
