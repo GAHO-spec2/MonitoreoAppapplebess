@@ -125,6 +125,13 @@ const mime = { '.js': 'application/javascript', '.css': 'text/css', '.svg': 'ima
       assert.equal(await p.locator('#emailAdmin').isVisible(), true);
       await p.context().close();
     });
+    await check('Cuenta bloqueada no accede al dashboard', async () => {
+      const p = await newPage({ data: { 'users/u': { role: 'gerente', bloqueado: true } } });
+      await p.goto(base + 'dashboard.html');
+      await p.waitForURL('**/login-admin.html');
+      assert.equal(await p.locator('#emailAdmin').isVisible(), true);
+      await p.context().close();
+    });
     await check('Revocación con panel abierto vuelve al acceso', async () => {
       const p = await newPage();
       await ready(p, 'dashboard.html');
@@ -156,7 +163,7 @@ const mime = { '.js': 'application/javascript', '.css': 'text/css', '.svg': 'ima
     });
     assert.deepEqual(errors, [], 'Errores JavaScript del navegador');
     assert.deepEqual(requestsFailed, [], 'Recursos locales con respuesta de error');
-    console.log('22 vistas y 12 escenarios funcionales correctos, con Firebase simulado.');
+    console.log('22 vistas y 13 escenarios funcionales correctos, con Firebase simulado.');
   } catch (error) {
     fs.mkdirSync(artifactDir, { recursive: true });
     fs.writeFileSync(path.join(artifactDir, 'failure.txt'), `${scenario}\n${error.stack}\n${errors.join('\n')}`);

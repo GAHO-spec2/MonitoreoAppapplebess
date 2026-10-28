@@ -4,7 +4,7 @@ let usuarioActual = null;
 let loginPendiente = null;
 
 function perfilAutorizado(datos) {
-  return !!datos && datos.activo !== false && ROLES_PERMITIDOS.includes(normalizarEstado(datos.role));
+  return !!datos && datos.activo !== false && datos.bloqueado !== true && ROLES_PERMITIDOS.includes(normalizarEstado(datos.role));
 }
 
 function esperarLogin() {

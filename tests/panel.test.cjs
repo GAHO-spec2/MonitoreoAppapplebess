@@ -81,8 +81,8 @@ test('la ausencia de respuesta y los errores de render no se muestran como éxit
   h.emit('.info/connected',true);h.emit('tickets',{});
   assert.doesNotMatch(h.node('estadoMonitoreo').innerHTML,/<strong>Lecturas recibidas/);
 });
-test('usuarios inactivos y roles ajenos no reciben acceso',async()=>{
-  for(const profile of [{role:'gerente',activo:false},{role:'cliente'},null]) {
+test('usuarios inactivos, bloqueados y roles ajenos no reciben acceso',async()=>{
+  for(const profile of [{role:'gerente',activo:false},{role:'gerente',bloqueado:true},{role:'cliente'},null]) {
     const h=harness();h.c.auth={onAuthStateChanged:fn=>fn({uid:'u'}),signOut:async()=>{}};
     const pending=h.c.esperarLogin();h.emit('users/u',profile);
     assert.equal(await pending,null);assert.equal(h.c.getUsuarioActual(),null);assert.equal(h.redirects.at(-1),'login-admin.html');
