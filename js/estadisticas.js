@@ -7,7 +7,7 @@ let ticketsStats = [];
 let canjesStats = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await esperarLogin();
+  if (!(await esperarLogin())) return;
   pintarUsuario();
 
   cargarEstadisticas();
@@ -16,13 +16,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 function cargarEstadisticas() {
   showLoader("Calculando estadísticas...");
 
-  Promise.all([
-    rtdb.ref("tickets").once("value"),
-    rtdb.ref("redemptions").once("value")
-  ])
-    .then(([ticketsSnap, canjesSnap]) => {
-      ticketsStats = Object.values(ticketsSnap.val() || {});
-      canjesStats = Object.values(canjesSnap.val() || {});
+  escucharGrupo(['tickets', 'redemptions'], ([ticketsSnap, canjesSnap]) => {
+      ticketsStats = registros(ticketsSnap.val());
+      canjesStats = registros(canjesSnap.val());
 
       pintarResumenGeneral();
       pintarTicketsPorSucursal();
@@ -32,24 +28,19 @@ function cargarEstadisticas() {
       pintarActividadDiaria();
 
       hideLoader();
-      showToast("Estadísticas actualizadas.", "success");
-    })
-    .catch(error => {
-      console.error(error);
-      hideLoader();
-      showToast("No se pudieron cargar las estadísticas.", "error");
-    });
+
+  });
 }
 
 function pintarResumenGeneral() {
   const aprobados = ticketsStats.filter(t => t.status === "aprobado");
 
   const ventaAprobada = aprobados.reduce((sum, t) => {
-    return sum + Number(t.totalValidado || t.total || 0);
+    return sum + totalTicket(t);
   }, 0);
 
   const monederoGenerado = aprobados.reduce((sum, t) => {
-    return sum + Number(t.monederoGenerado || 0);
+    return sum + numeroSeguro(t.monederoGenerado);
   }, 0);
 
   const promedioTicket = aprobados.length
@@ -71,15 +62,15 @@ function agruparPor(lista, campo) {
     const key = item[campo] || "Sin dato";
     acc[key] = (acc[key] || 0) + 1;
     return acc;
-  }, {});
+  }, Object.create(null));
 }
 
 function agruparMontoPor(lista, campo, campoMonto) {
   return lista.reduce((acc, item) => {
     const key = item[campo] || "Sin dato";
-    acc[key] = (acc[key] || 0) + Number(item[campoMonto] || 0);
+    acc[key] = (acc[key] || 0) + numeroSeguro(item[campoMonto]);
     return acc;
-  }, {});
+  }, Object.create(null));
 }
 
 function pintarListaStats(contenedorId, data, tipo = "cantidad") {
@@ -126,7 +117,7 @@ function pintarTicketsPorEstado() {
     const label = getStatusLabel(t.status);
     acc[label] = (acc[label] || 0) + 1;
     return acc;
-  }, {});
+  }, Object.create(null));
 
   pintarListaStats("ticketsPorEstado", estados);
 }
@@ -138,21 +129,21 @@ function pintarCanjesPorSucursal() {
     const key = c.sucursalCanjeNombre || c.sucursalCanje || "Sin dato";
     acc[key] = (acc[key] || 0) + 1;
     return acc;
-  }, {});
+  }, Object.create(null));
 
   pintarListaStats("canjesPorSucursal", data);
 }
 
 function fechaDeTimestamp(ts) {
   if (!ts) return "Sin fecha";
-  return new Date(ts).toISOString().slice(0, 10);
+  return fechaLocal(ts);
 }
 
 function pintarActividadDiaria() {
   const tbody = document.getElementById("tablaActividadDiaria");
   if (!tbody) return;
 
-  const dias = {};
+  const dias = Object.create(null);
 
   ticketsStats.forEach(t => {
     const fecha = fechaDeTimestamp(t.createdAt);
@@ -173,10 +164,10 @@ function pintarActividadDiaria() {
 
     if (t.status === "aprobado") {
       dias[fecha].aprobados += 1;
-      dias[fecha].venta += Number(t.totalValidado || t.total || 0);
+      dias[fecha].venta += totalTicket(t);
     }
 
-    if (["rechazado_corregible", "anulado", "error_validacion", "pendiente_revision_manual"].includes(t.status)) {
+    if (calcularRiesgo(t).score > 0) {
       dias[fecha].alertas += 1;
     }
   });

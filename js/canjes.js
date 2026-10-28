@@ -6,7 +6,7 @@
 let canjesGlobal = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await esperarLogin();
+  if (!(await esperarLogin())) return;
   pintarUsuario();
 
   cargarCanjes();
@@ -15,23 +15,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 function cargarCanjes() {
   showLoader("Cargando canjes...");
 
-  rtdb.ref("redemptions")
-    .on("value", snapshot => {
+  escucharDatos(rtdb.ref("redemptions"), snapshot => {
       const data = snapshot.val() || {};
 
-      canjesGlobal = Object.entries(data)
-        .map(([key, value]) => ({
-          redemptionKey: key,
-          redemptionId: value.redemptionId || key,
-          ...value
-        }))
+      canjesGlobal = registros(data, "redemptionId")
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
       pintarKPIsCanjes();
-      pintarTablaCanjes(canjesGlobal);
+      filtrarCanjes();
 
       hideLoader();
-    }, error => {
+    }, "redemptions:lista", error => {
       console.error(error);
       hideLoader();
       showToast("No se pudieron cargar los canjes.", "error");
@@ -45,7 +39,7 @@ function pintarKPIsCanjes() {
 
   const montoCanjeado = canjesGlobal
     .filter(c => c.status === "canjeado")
-    .reduce((sum, c) => sum + Number(c.monto || 0), 0);
+    .reduce((sum, c) => sum + numeroSeguro(c.monto), 0);
 
   document.getElementById("kpiCanjesTotal").textContent = total;
   document.getElementById("kpiCanjesPendientes").textContent = pendientes;
@@ -77,7 +71,7 @@ function pintarTablaCanjes(canjes) {
       <td>${money(c.monto || 0)}</td>
       <td>
         <span class="status ${getStatusClass(c.status)}">
-          ${getStatusLabel(c.status)}
+          ${safeText(getStatusLabel(c.status))}
         </span>
       </td>
       <td>${safeText(c.sucursalCanjeNombre || c.sucursalCanje || "---")}</td>

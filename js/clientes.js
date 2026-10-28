@@ -8,7 +8,7 @@ let ticketsGlobal = [];
 let canjesGlobal = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await esperarLogin();
+  if (!(await esperarLogin())) return;
   pintarUsuario();
 
   cargarClientes();
@@ -17,41 +17,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function cargarClientes() {
   showLoader("Cargando clientes...");
 
-  try {
-    const [usersSnap, ticketsSnap, redemptionsSnap] = await Promise.all([
-      rtdb.ref("users").once("value"),
-      rtdb.ref("tickets").once("value"),
-      rtdb.ref("redemptions").once("value")
-    ]);
-
+  escucharGrupo(['users', 'tickets', 'redemptions'], ([usersSnap, ticketsSnap, redemptionsSnap]) => {
     const usersObj = usersSnap.val() || {};
-    ticketsGlobal = Object.values(ticketsSnap.val() || {});
-    canjesGlobal = Object.values(redemptionsSnap.val() || {});
+    ticketsGlobal = registros(ticketsSnap.val());
+    canjesGlobal = registros(redemptionsSnap.val());
 
-    clientesGlobal = Object.entries(usersObj)
-      .map(([uid, data]) => ({
-        uid,
-        ...data
-      }))
-      .filter(u => String(u.role || "cliente").toLowerCase() === "cliente")
+    clientesGlobal = registros(usersObj, "uid")
+      .filter(u => normalizarEstado(u.role || "cliente") === "cliente")
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
     pintarKPIsClientes();
-    pintarTablaClientes(clientesGlobal);
+    filtrarClientes();
 
     hideLoader();
-    showToast("Clientes cargados correctamente.", "success");
 
-  } catch (error) {
-    console.error(error);
-    hideLoader();
-    showToast("No se pudieron cargar los clientes.", "error");
-  }
+
+  });
 }
 
 function pintarKPIsClientes() {
   const saldoTotal = clientesGlobal.reduce((sum, c) => {
-    return sum + Number(c.saldoDisponible || 0);
+    return sum + numeroSeguro(c.saldoDisponible);
   }, 0);
 
   const ticketsAprobados = ticketsGlobal.filter(t => t.status === "aprobado").length;
@@ -93,7 +79,7 @@ function pintarTablaClientes(clientes) {
         <td>${canjesCliente.length}</td>
         <td>${formatDateTime(cliente.createdAt)}</td>
         <td>
-          <button class="btn btn-secondary" onclick="abrirCliente('${cliente.uid}')">
+          <button class="btn btn-secondary" data-cliente-uid="${safeText(cliente.uid)}">
             Ver
           </button>
         </td>

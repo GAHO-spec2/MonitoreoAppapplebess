@@ -6,7 +6,7 @@
 let ticketsGlobal = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await esperarLogin();
+  if (!(await esperarLogin())) return;
   pintarUsuario();
 
   cargarTickets();
@@ -15,22 +15,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 function cargarTickets() {
   showLoader("Cargando tickets...");
 
-  rtdb.ref("tickets")
-    .on("value", snapshot => {
+  escucharDatos(rtdb.ref("tickets"), snapshot => {
       const data = snapshot.val() || {};
 
-      ticketsGlobal = Object.entries(data)
-        .map(([key, value]) => ({
-          ticketKey: value.ticketKey || key,
-          ...value
-        }))
+      ticketsGlobal = registros(data, "ticketKey")
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
       pintarKPIsTickets();
-      pintarTablaTickets(ticketsGlobal);
+      filtrarTickets();
 
       hideLoader();
-    }, error => {
+    }, "tickets:lista", error => {
       console.error(error);
       hideLoader();
       showToast("No se pudieron cargar los tickets.", "error");
@@ -46,62 +41,12 @@ function pintarKPIsTickets() {
     ["pendiente_validacion", "pendiente_revision_manual"].includes(t.status)
   ).length;
 
-  const riesgos = ticketsGlobal.filter(t => calcularRiesgoTicket(t).nivel !== "bajo").length;
+  const riesgos = ticketsGlobal.filter(t => calcularRiesgo(t).score > 0).length;
 
   document.getElementById("kpiTicketsTotal").textContent = total;
   document.getElementById("kpiTicketsAprobados").textContent = aprobados;
   document.getElementById("kpiTicketsPendientes").textContent = pendientes;
   document.getElementById("kpiTicketsRiesgo").textContent = riesgos;
-}
-
-function calcularRiesgoTicket(t) {
-  let score = 0;
-  const motivos = [];
-
-  if (t.status === "rechazado_corregible") {
-    score += 35;
-    motivos.push("Requiere corrección");
-  }
-
-  if (t.status === "anulado") {
-    score += 70;
-    motivos.push("Anulado");
-  }
-
-  if (t.status === "error_validacion") {
-    score += 40;
-    motivos.push("Error de validación");
-  }
-
-  if (Number(t.intentosValidacion || 0) >= 1) {
-    score += 20;
-    motivos.push("Intentos fallidos");
-  }
-
-  if (t.ticketVision?.camposCorregidos?.length) {
-    score += 25;
-    motivos.push("Datos corregidos manualmente");
-  }
-
-  if (t.ticketVision?.modoManual) {
-    score += 20;
-    motivos.push("Registro manual");
-  }
-
-  if (t.motivoRechazo) {
-    score += 25;
-    motivos.push(t.motivoRechazo);
-  }
-
-  let nivel = "bajo";
-  if (score >= 70) nivel = "alto";
-  else if (score >= 35) nivel = "medio";
-
-  return {
-    score,
-    nivel,
-    motivos
-  };
 }
 
 function pintarTablaTickets(tickets) {
@@ -118,7 +63,7 @@ function pintarTablaTickets(tickets) {
   }
 
   tbody.innerHTML = tickets.map(t => {
-    const riesgo = calcularRiesgoTicket(t);
+    const riesgo = calcularRiesgo(t);
 
     return `
       <tr>
@@ -130,17 +75,17 @@ function pintarTablaTickets(tickets) {
         <td>${money(t.total || 0)}</td>
         <td>
           <span class="status ${getStatusClass(t.status)}">
-            ${getStatusLabel(t.status)}
+            ${safeText(getStatusLabel(t.status))}
           </span>
         </td>
-        <td>${Number(t.intentosValidacion || 0)} / ${Number(t.maxIntentos || 2)}</td>
+        <td>${numeroSeguro(t.intentosValidacion)} / ${numeroSeguro(t.maxIntentos, 2)}</td>
         <td>
           <span class="risk risk-${riesgo.nivel}" title="${safeText(riesgo.motivos.join(" · "))}">
             ${riesgo.nivel.toUpperCase()}
           </span>
         </td>
         <td>
-          <button class="btn btn-secondary" onclick="abrirTicket('${safeText(t.ticketKey)}')">
+          <button class="btn btn-secondary" data-ticket-key="${safeText(t.ticketKey)}">
             Ver
           </button>
         </td>
@@ -166,7 +111,7 @@ function filtrarTickets() {
 
   if (q) {
     filtrados = filtrados.filter(t => {
-      const riesgo = calcularRiesgoTicket(t);
+      const riesgo = calcularRiesgo(t);
 
       return (
         String(t.clienteEmail || "").toLowerCase().includes(q) ||

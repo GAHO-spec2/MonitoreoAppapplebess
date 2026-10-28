@@ -6,7 +6,7 @@
 
   <title>Configuración | Applebee's Loyalty Control Center</title>
 
-  <link rel="icon" type="image/png" sizes="32x32" href="manzanas.png">
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
   <link rel="stylesheet" href="css/admin.css" />
   <link rel="stylesheet" href="css/cards.css" />
 <link rel="stylesheet" href="css/tablas.css" />
@@ -94,7 +94,7 @@
             </label>
           </div>
 
-          <button class="btn btn-primary" onclick="guardarConfiguracion()">
+          <button class="btn btn-primary" data-config-write onclick="guardarConfiguracion()">
             Guardar configuración
           </button>
         </div>
@@ -105,12 +105,12 @@
           <div class="system-status">
             <div>
               <strong>Firebase Auth</strong>
-              <span class="status status-ok">Conectado</span>
+              <span id="estadoAuth" class="status status-warning">Verificando sesión</span>
             </div>
 
             <div>
               <strong>Realtime Database</strong>
-              <span class="status status-ok">Conectado</span>
+              <span id="estadoRTDB" class="status status-warning">Esperando lectura</span>
             </div>
 
             <div>
@@ -119,7 +119,7 @@
             </div>
 
             <div>
-              <strong>Proyecto</strong>
+              <strong>Ambiente configurado</strong><span id="ambienteActual" class="muted">Sin confirmar</span></div><div><strong>Proyecto</strong>
               <span id="configProyecto" class="muted">applev1demo</span>
             </div>
           </div>
@@ -133,7 +133,7 @@
             <p class="muted">Catálogo base para reportes, tickets y canjes.</p>
           </div>
 
-          <button class="btn btn-secondary" onclick="restaurarSucursalesBase()">
+          <button class="btn btn-secondary" data-config-write onclick="restaurarSucursalesBase()">
             Restaurar sucursales base
           </button>
         </div>
@@ -162,7 +162,7 @@
         <h3>Notas de operación</h3>
         <div class="info-block">
           <p class="muted">
-            Esta sección centraliza los parámetros del programa. Por seguridad, solo roles administrativos
+            El selector de ambiente es una etiqueta de configuración: no separa bases de datos ni bloquea operaciones reales. Esta sección centraliza los parámetros del programa. Por seguridad, solo roles administrativos
             deberían modificar estos valores. Los cambios quedan disponibles para futuras integraciones
             del cliente, validadores y reportes.
           </p>
@@ -177,9 +177,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 
- <script src="js/firebase.js?v=admin_3"></script>
-<script src="js/common.js?v=admin_3"></script>
-<script src="js/auth.js?v=admin_3"></script>
-<script src="js/configuracion.js?v=admin_3"></script>
+ <script src="js/firebase.js?v=monitor_4"></script>
+<script src="js/common.js?v=monitor_4"></script>
+<script src="js/monitoreo.js?v=monitor_4"></script>
+<script src="js/auth.js?v=monitor_4"></script>
+<script src="js/configuracion.js?v=monitor_4"></script>
 </body>
 </html>

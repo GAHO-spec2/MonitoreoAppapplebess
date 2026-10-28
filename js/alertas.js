@@ -6,7 +6,7 @@
 let alertasGlobal = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await esperarLogin();
+  if (!(await esperarLogin())) return;
   pintarUsuario();
 
   cargarAlertas();
@@ -15,20 +15,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 function cargarAlertas() {
   showLoader("Analizando alertas...");
 
-  rtdb.ref("tickets")
-    .on("value", snapshot => {
+  escucharDatos(rtdb.ref("tickets"), snapshot => {
       const ticketsObj = snapshot.val() || {};
 
-      alertasGlobal = Object.entries(ticketsObj)
-        .map(([key, ticket]) => {
-          const riesgo = calcularRiesgo(ticket);
-
-          return {
-            ticketKey: ticket.ticketKey || key,
-            ...ticket,
-            riesgo
-          };
-        })
+      alertasGlobal = registros(ticketsObj, "ticketKey")
+        .map(ticket => ({ ...ticket, riesgo: calcularRiesgo(ticket) }))
         .filter(t => t.riesgo.score > 0)
         .sort((a, b) => {
           if (b.riesgo.score !== a.riesgo.score) {
@@ -39,82 +30,14 @@ function cargarAlertas() {
         });
 
       pintarKPIsAlertas();
-      pintarAlertas(alertasGlobal);
+      filtrarAlertas();
 
       hideLoader();
-    }, error => {
+    }, "tickets:alertas", error => {
       console.error(error);
       hideLoader();
       showToast("No se pudieron cargar las alertas.", "error");
     });
-}
-
-function calcularRiesgo(t) {
-  let score = 0;
-  const motivos = [];
-
-  const status = String(t.status || "").toLowerCase().trim();
-
-  if (status === "anulado") {
-    score += 80;
-    motivos.push("Ticket anulado por intentos agotados");
-  }
-
-  if (status === "rechazado_corregible") {
-    score += 45;
-    motivos.push("Datos no coinciden y requiere corrección");
-  }
-
-  if (status === "error_validacion") {
-    score += 45;
-    motivos.push("Error durante validación automática");
-  }
-
-  if (status === "pendiente_revision_manual") {
-    score += 35;
-    motivos.push("OCR/API falló y pasó a revisión manual");
-  }
-
-  if (Number(t.intentosValidacion || 0) > 0) {
-    score += Number(t.intentosValidacion || 0) * 20;
-    motivos.push(`Intentos de validación: ${t.intentosValidacion}`);
-  }
-
-  const camposCorregidos = t.ticketVision?.camposCorregidos || [];
-
-  if (camposCorregidos.length) {
-    score += camposCorregidos.length * 18;
-    motivos.push(`Campos corregidos: ${camposCorregidos.join(", ")}`);
-  }
-
-  if (t.ticketVision?.modoManual) {
-    score += 25;
-    motivos.push("Registro manual activado");
-  }
-
-  if (t.motivoRechazo) {
-    score += 30;
-    motivos.push(t.motivoRechazo);
-  }
-
-  if (String(t.mensajeCliente || "").toLowerCase().includes("agotaron")) {
-    score += 35;
-    motivos.push("Se agotaron intentos disponibles");
-  }
-
-  let nivel = "bajo";
-
-  if (score >= 80) {
-    nivel = "alto";
-  } else if (score >= 40) {
-    nivel = "medio";
-  }
-
-  return {
-    score,
-    nivel,
-    motivos
-  };
 }
 
 function pintarKPIsAlertas() {
@@ -156,7 +79,7 @@ function pintarAlertas(alertas) {
           </p>
         </div>
 
-        <button class="btn btn-secondary" onclick="abrirTicketAlerta('${safeText(a.ticketKey)}')">
+        <button class="btn btn-secondary" data-ticket-key="${safeText(a.ticketKey)}">
           Ver ticket
         </button>
       </div>

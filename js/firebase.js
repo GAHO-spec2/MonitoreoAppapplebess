@@ -26,8 +26,4 @@ if (firebase.storage) {
   storage = firebase.storage();
 }
 
-console.log("Firebase conectado correctamente:", {
-  auth: !!auth,
-  db: !!db,
-  storage: !!storage
-});
+// La conexión real se comprueba con .info/connected y lecturas autorizadas.

@@ -15,7 +15,7 @@ const ROLES_OPERATIVOS = [
 ];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await esperarLogin();
+  if (!(await esperarLogin())) return;
   pintarUsuario();
 
   cargarGerentes();
@@ -24,36 +24,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 function cargarGerentes() {
   showLoader("Cargando usuarios operativos...");
 
-  Promise.all([
-    rtdb.ref("users").once("value"),
-    rtdb.ref("redemptions").once("value")
-  ])
-    .then(([usersSnap, redemptionsSnap]) => {
+  escucharGrupo(['users', 'redemptions'], ([usersSnap, redemptionsSnap]) => {
       const usersObj = usersSnap.val() || {};
       const canjesObj = redemptionsSnap.val() || {};
 
-      canjesValidadosGlobal = Object.values(canjesObj)
+      canjesValidadosGlobal = registros(canjesObj)
         .filter(c => String(c.status || "").toLowerCase() === "canjeado");
 
-      gerentesGlobal = Object.entries(usersObj)
-        .map(([uid, data]) => ({
-          uid,
-          ...data,
-          role: String(data.role || "").toLowerCase().trim()
-        }))
+      gerentesGlobal = registros(usersObj, "uid")
+        .map(data => ({ ...data, role: normalizarEstado(data.role) }))
         .filter(u => ROLES_OPERATIVOS.includes(u.role))
         .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
 
       pintarKPIsGerentes();
-      pintarTablaGerentes(gerentesGlobal);
+      filtrarGerentes();
 
       hideLoader();
-    })
-    .catch(error => {
-      console.error(error);
-      hideLoader();
-      showToast("No se pudieron cargar los gerentes.", "error");
-    });
+  });
 }
 
 function pintarKPIsGerentes() {
@@ -68,7 +55,7 @@ function pintarKPIsGerentes() {
   const totalCanjes = canjesValidadosGlobal.length;
 
   const montoValidado = canjesValidadosGlobal.reduce((sum, c) => {
-    return sum + Number(c.monto || 0);
+    return sum + numeroSeguro(c.monto);
   }, 0);
 
   document.getElementById("kpiGerentesActivos").textContent = gerentesActivos;
@@ -92,10 +79,10 @@ function pintarTablaGerentes(gerentes) {
 
   tbody.innerHTML = gerentes.map(g => {
     const canjesGerente = canjesValidadosGlobal.filter(c =>
-      c.gerenteUid === g.uid || String(c.gerenteEmail || "").toLowerCase() === String(g.email || "").toLowerCase()
+      c.gerenteUid ? c.gerenteUid === g.uid : !!g.email && normalizarEstado(c.gerenteEmail) === normalizarEstado(g.email)
     );
 
-    const monto = canjesGerente.reduce((sum, c) => sum + Number(c.monto || 0), 0);
+    const monto = canjesGerente.reduce((sum, c) => sum + numeroSeguro(c.monto), 0);
 
     const ultimaValidacion = canjesGerente
       .sort((a, b) => (b.redeemedAt || 0) - (a.redeemedAt || 0))[0];

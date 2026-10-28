@@ -6,13 +6,13 @@
 let clienteUid = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await esperarLogin();
+  if (!(await esperarLogin())) return;
   pintarUsuario();
 
   const params = new URLSearchParams(window.location.search);
   clienteUid = params.get("uid");
 
-  if (!clienteUid) {
+  if (!claveFirebaseValida(clienteUid)) {
     showToast("No se recibió UID del cliente.", "error");
     setTimeout(() => {
       window.location.href = "clientes.html";
@@ -26,31 +26,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function cargarDetalleCliente(uid) {
   showLoader("Cargando expediente del cliente...");
 
-  try {
-    const [userSnap, ticketsSnap, canjesSnap, movimientosSnap] = await Promise.all([
-      rtdb.ref(`users/${uid}`).once("value"),
-      rtdb.ref("tickets").orderByChild("userId").equalTo(uid).once("value"),
-      rtdb.ref("redemptions").orderByChild("userId").equalTo(uid).once("value"),
-      rtdb.ref(`walletMovements/${uid}`).once("value")
-    ]);
-
+  escucharConsultas([
+    [rtdb.ref(`users/${uid}`), "users:detalle"],
+    [rtdb.ref("tickets").orderByChild("userId").equalTo(uid), "tickets:cliente"],
+    [rtdb.ref("redemptions").orderByChild("userId").equalTo(uid), "redemptions:cliente"],
+    [rtdb.ref(`walletMovements/${uid}`), "walletMovements:cliente"]
+  ], ([userSnap, ticketsSnap, canjesSnap, movimientosSnap]) => {
     const cliente = userSnap.val();
 
     if (!cliente) {
-      hideLoader();
-      showToast("Cliente no encontrado.", "error");
-      return;
+      document.querySelectorAll(".main .panel-card, .main .kpi-grid").forEach(node => { node.hidden = true; });
+      throw new Error("Cliente no encontrado");
     }
 
-    const tickets = Object.values(ticketsSnap.val() || {})
+    const tickets = registros(ticketsSnap.val())
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-    const canjes = Object.values(canjesSnap.val() || {})
+    const canjes = registros(canjesSnap.val())
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-    const movimientos = Object.values(movimientosSnap.val() || {})
+    const movimientos = registros(movimientosSnap.val())
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
+    document.querySelectorAll(".main .panel-card, .main .kpi-grid").forEach(node => { node.hidden = false; });
     pintarPerfilCliente(cliente, uid);
     pintarKPIsDetalle(cliente, tickets, canjes);
     pintarTicketsCliente(tickets);
@@ -59,11 +57,7 @@ async function cargarDetalleCliente(uid) {
 
     hideLoader();
 
-  } catch (error) {
-    console.error(error);
-    hideLoader();
-    showToast("No se pudo cargar el expediente.", "error");
-  }
+  });
 }
 
 function pintarPerfilCliente(cliente, uid) {
@@ -87,7 +81,7 @@ function pintarKPIsDetalle(cliente, tickets, canjes) {
   const aprobados = tickets.filter(t => t.status === "aprobado");
 
   const totalGastado = aprobados.reduce((sum, t) => {
-    return sum + Number(t.totalValidado || t.total || 0);
+    return sum + totalTicket(t);
   }, 0);
 
   document.getElementById("detalleSaldo").textContent = money(cliente.saldoDisponible || 0);
@@ -112,7 +106,7 @@ function pintarTicketsCliente(tickets) {
       <td>${money(t.total || 0)}</td>
       <td>
         <span class="status ${getStatusClass(t.status)}">
-          ${getStatusLabel(t.status)}
+          ${safeText(getStatusLabel(t.status))}
         </span>
       </td>
       <td>${safeText(t.motivoRechazo || t.mensajeCliente || "---")}</td>
@@ -135,7 +129,7 @@ function pintarCanjesCliente(canjes) {
       <td>${money(c.monto || 0)}</td>
       <td>
         <span class="status ${getStatusClass(c.status)}">
-          ${getStatusLabel(c.status)}
+          ${safeText(getStatusLabel(c.status))}
         </span>
       </td>
     </tr>

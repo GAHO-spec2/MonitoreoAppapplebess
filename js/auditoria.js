@@ -6,7 +6,7 @@
 let auditoriaGlobal = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await esperarLogin();
+  if (!(await esperarLogin())) return;
   pintarUsuario();
 
   cargarAuditoria();
@@ -15,22 +15,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 function cargarAuditoria() {
   showLoader("Cargando auditoría...");
 
-  rtdb.ref("auditLogs")
-    .on("value", snapshot => {
+  escucharDatos(rtdb.ref("auditLogs"), snapshot => {
       const data = snapshot.val() || {};
 
-      auditoriaGlobal = Object.entries(data)
-        .map(([key, value]) => ({
-          logKey: key,
-          ...value
-        }))
+      auditoriaGlobal = registros(data, "logKey")
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
       pintarKPIsAuditoria();
-      pintarTablaAuditoria(auditoriaGlobal);
+      filtrarAuditoria();
 
       hideLoader();
-    }, error => {
+    }, "auditLogs:lista", error => {
       console.error(error);
       hideLoader();
       showToast("No se pudo cargar la auditoría.", "error");
@@ -44,11 +39,11 @@ function pintarKPIsAuditoria() {
     String(a.type || "").toUpperCase().includes("CANJE")
   ).length;
 
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = fechaLocal(Date.now());
 
   const eventosHoy = auditoriaGlobal.filter(a => {
     if (!a.createdAt) return false;
-    return new Date(a.createdAt).toISOString().slice(0, 10) === hoy;
+    return fechaLocal(a.createdAt) === hoy;
   }).length;
 
   const usuarios = new Set(

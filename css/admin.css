@@ -352,3 +352,12 @@ select {
     transform: rotate(360deg);
   }
 }
+.monitor-status { display: flex; flex-direction: column; gap: 6px; padding: 14px 18px; margin-bottom: 22px; border: 1px solid var(--line); border-left-width: 4px; border-radius: 12px; background: var(--surface); }
+.monitor-status span { font-size: 13px; color: var(--muted); }
+.monitor-ok { border-left-color: var(--green); }
+.monitor-error { border-left-color: var(--danger); }
+.monitor-pending { border-left-color: var(--yellow); }
+.btn:disabled { cursor: wait; opacity: .55; transform: none; }
+[hidden] { display: none !important; }
+
+.monitor-status { overflow-wrap: anywhere; }

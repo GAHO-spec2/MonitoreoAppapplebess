@@ -6,13 +6,13 @@
 let ticketKeyActual = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await esperarLogin();
+  if (!(await esperarLogin())) return;
   pintarUsuario();
 
   const params = new URLSearchParams(window.location.search);
   ticketKeyActual = params.get("ticketKey");
 
-  if (!ticketKeyActual) {
+  if (!claveFirebaseValida(ticketKeyActual)) {
     showToast("No se recibió ticketKey.", "error");
     setTimeout(() => {
       window.location.href = "tickets.html";
@@ -26,16 +26,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function cargarDetalleTicket(ticketKey) {
   showLoader("Cargando detalle del ticket...");
 
-  try {
-    const snap = await rtdb.ref(`tickets/${ticketKey}`).once("value");
+  escucharDatos(rtdb.ref(`tickets/${ticketKey}`), snap => {
     const ticket = snap.val();
 
     if (!ticket) {
-      hideLoader();
-      showToast("Ticket no encontrado.", "error");
-      return;
+      document.querySelectorAll(".main .panel-card, .main .kpi-grid").forEach(node => { node.hidden = true; });
+      throw new Error("Ticket no encontrado");
     }
 
+    document.querySelectorAll(".main .panel-card, .main .kpi-grid").forEach(node => { node.hidden = false; });
     pintarResumenTicket(ticket);
     pintarDatosConfirmados(ticket);
     pintarDatosOCR(ticket);
@@ -45,61 +44,11 @@ async function cargarDetalleTicket(ticketKey) {
 
     hideLoader();
 
-  } catch (error) {
-    console.error(error);
-    hideLoader();
-    showToast("No se pudo cargar el ticket.", "error");
-  }
-}
-
-function calcularRiesgoTicketDetalle(t) {
-  let score = 0;
-  const motivos = [];
-
-  if (t.status === "rechazado_corregible") {
-    score += 35;
-    motivos.push("Requiere corrección");
-  }
-
-  if (t.status === "anulado") {
-    score += 70;
-    motivos.push("Anulado");
-  }
-
-  if (t.status === "error_validacion") {
-    score += 40;
-    motivos.push("Error de validación");
-  }
-
-  if (Number(t.intentosValidacion || 0) >= 1) {
-    score += 20;
-    motivos.push("Intentos fallidos");
-  }
-
-  if (t.ticketVision?.camposCorregidos?.length) {
-    score += 25;
-    motivos.push("Datos corregidos manualmente");
-  }
-
-  if (t.ticketVision?.modoManual) {
-    score += 20;
-    motivos.push("Registro manual");
-  }
-
-  if (t.motivoRechazo) {
-    score += 25;
-    motivos.push(t.motivoRechazo);
-  }
-
-  let nivel = "bajo";
-  if (score >= 70) nivel = "alto";
-  else if (score >= 35) nivel = "medio";
-
-  return { score, nivel, motivos };
+  }, "tickets:detalle");
 }
 
 function pintarResumenTicket(t) {
-  const riesgo = calcularRiesgoTicketDetalle(t);
+  const riesgo = calcularRiesgo(t);
 
   document.getElementById("ticketTitulo").textContent = `Ticket ${t.folio || "---"}`;
   document.getElementById("ticketSubtitulo").textContent =
@@ -114,7 +63,7 @@ function pintarResumenTicket(t) {
   status.className = `status ${getStatusClass(t.status)}`;
 
   document.getElementById("detalleTotalCliente").textContent = money(t.total || 0);
-  document.getElementById("detalleTotalValidado").textContent = money(t.totalValidado || 0);
+  document.getElementById("detalleTotalValidado").textContent = t.totalValidado == null ? "Sin validar" : money(t.totalValidado);
   document.getElementById("detalleMonedero").textContent = money(t.monederoGenerado || 0);
   document.getElementById("detalleRiesgo").textContent = `${riesgo.nivel.toUpperCase()} ${riesgo.score}`;
 }
@@ -126,7 +75,7 @@ function pintarDatosConfirmados(t) {
   document.getElementById("confirmadoMesero").textContent = t.mesero || "---";
   document.getElementById("confirmadoFotos").textContent = t.fotosCantidad || 0;
   document.getElementById("confirmadoIntentos").textContent =
-    `${Number(t.intentosValidacion || 0)} / ${Number(t.maxIntentos || 2)}`;
+    `${numeroSeguro(t.intentosValidacion)} / ${numeroSeguro(t.maxIntentos, 2)}`;
 }
 
 function pintarDatosOCR(t) {
@@ -135,7 +84,7 @@ function pintarDatosOCR(t) {
 
   document.getElementById("ocrFolio").textContent = detectado.folio || "---";
   document.getElementById("ocrFecha").textContent = detectado.fecha || "---";
-  document.getElementById("ocrTotal").textContent = detectado.total ? money(detectado.total) : "---";
+  document.getElementById("ocrTotal").textContent = detectado.total != null ? money(detectado.total) : "---";
   document.getElementById("ocrMesero").textContent = detectado.mesero || "---";
   document.getElementById("ocrManual").textContent = vision.modoManual ? "Sí" : "No";
   document.getElementById("ocrFingerprint").textContent = vision.fingerprint || "---";
@@ -145,8 +94,8 @@ function pintarCorrecciones(t) {
   const box = document.getElementById("bloqueCorrecciones");
   const vision = t.ticketVision || {};
 
-  const campos = vision.camposCorregidos || [];
-  const advertencias = vision.advertencias || [];
+  const campos = Array.isArray(vision.camposCorregidos) ? vision.camposCorregidos : [];
+  const advertencias = Array.isArray(vision.advertencias) ? vision.advertencias : [];
 
   if (!campos.length && !advertencias.length) {
     box.innerHTML = `<p class="muted">Sin correcciones ni advertencias registradas.</p>`;
